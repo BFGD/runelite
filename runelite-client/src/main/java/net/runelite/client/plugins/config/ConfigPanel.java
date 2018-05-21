@@ -82,13 +82,13 @@ import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.ComboBoxListRenderer;
 import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.SwingUtil;
+import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
 public class ConfigPanel extends PluginPanel
 {
 	private static final int TEXT_FIELD_WIDTH = 7;
 	private static final int SPINNER_FIELD_WIDTH = 6;
-
 	private static final ImageIcon CONFIG_ICON;
 	private static final ImageIcon CONFIG_ICON_HOVER;
 	private static final ImageIcon ON_SWITCHER;
@@ -126,6 +126,7 @@ public class ConfigPanel extends PluginPanel
 	public ConfigPanel(PluginManager pluginManager, ConfigManager configManager, ScheduledExecutorService executorService, RuneLiteConfig runeLiteConfig)
 	{
 		super();
+
 		this.pluginManager = pluginManager;
 		this.configManager = configManager;
 		this.executorService = executorService;
@@ -162,6 +163,7 @@ public class ConfigPanel extends PluginPanel
 
 		rebuildPluginList();
 		openConfigList();
+
 	}
 
 	final void rebuildPluginList()
@@ -176,13 +178,15 @@ public class ConfigPanel extends PluginPanel
 			{
 				final Config pluginConfigProxy = pluginManager.getPluginConfigProxy(plugin);
 				final String pluginName = plugin.getClass().getAnnotation(PluginDescriptor.class).name();
+				//final String pluginWikiEndpoint = plugin.getClass().getAnnotation(PluginDescriptor.class).wikiEndpoint();
+				final String pluginWikiEndpoint = pluginName.replaceAll(" ", "-");
 
 				final JPanel groupPanel = buildGroupPanel();
 
-				JLabel name = new JLabel(pluginName);
-				name.setForeground(Color.WHITE);
+				final JLabel pluginNameplate = buildPluginNameplate(pluginName, pluginWikiEndpoint);
+				groupPanel.add(pluginNameplate, BorderLayout.CENTER);
 
-				groupPanel.add(name, BorderLayout.CENTER);
+				groupPanel.add(pluginNameplate, BorderLayout.CENTER);
 
 				final JPanel buttonPanel = new JPanel();
 				buttonPanel.setLayout(new GridLayout(1, 2));
@@ -220,6 +224,40 @@ public class ConfigPanel extends PluginPanel
 
 		children = newChildren;
 		openConfigList();
+	}
+
+	private JLabel buildPluginNameplate(String pluginName, String pluginEndpoint)
+	{
+		final JLabel pluginNameplate = new JLabel(pluginName);
+		pluginNameplate.setForeground(Color.WHITE);
+
+		pluginNameplate.setToolTipText("help with this plugin.. (Alt+click)");
+
+		pluginNameplate.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				if (e.getButton() == MouseEvent.BUTTON1 && e.isAltDown())
+				{
+					LinkBrowser.browse("https://github.com/runelite/runelite/wiki/" + pluginEndpoint);
+				}
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				pluginNameplate.setForeground(Color.LIGHT_GRAY);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				pluginNameplate.setForeground(Color.WHITE);
+			}
+		});
+
+		return pluginNameplate;
 	}
 
 	private JPanel buildGroupPanel()
